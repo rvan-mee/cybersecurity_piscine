@@ -122,7 +122,7 @@ def validate_url(url):
     # Just make a request to the given url and see if it succeeds
     status = requests.get(url, headers=anti_bot_headers)
     if status.status_code != 200:
-        print('\n\n\n' + clear_prev_line + Fore.RED + 'Invalid URL: ' + url + ' Status: ' + str(status.status_code) + '\n\n\n\n', end='')
+        print(clear_prev_line + Fore.RED + 'Invalid URL: ' + url + ' Status: ' + str(status.status_code))
         return False
     return True
 
@@ -146,7 +146,7 @@ def scrape_image_urls(current_url, recursion_enabled, depth):
     visited_urls[current_url] = depth
 
     # Parse the current url's HTML
-    print(clear_prev_line + Fore.LIGHTBLACK_EX + 'Crawling on url: ' + current_url + Fore.RESET, end='\r')
+    print(clear_prev_line + Fore.LIGHTBLACK_EX + 'Crawling on url: ' + current_url[:60] + Fore.RESET, end='\r')
     response = requests.get(current_url, headers=anti_bot_headers)
 
     parser = SpiderParser()
