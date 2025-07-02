@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 
 from html.parser import HTMLParser
-from urllib import request, error
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
-import urllib.request
+import requests
 import argparse
 import gzip
 import io
@@ -120,20 +119,13 @@ class SpiderParser(HTMLParser):
 
 
 def validate_url(url):
-    try:
-        request_params = request.Request(
-            url=url, 
-            headers=anti_bot_headers
-        )    
-        # Just make a request to the given url and see if it succeeds
-        request.urlopen(request_params)
-    except Exception as error:
-        print(clear_prev_line + Fore.RED + 'Invalid URL: ' + url, end='')
-        print(' Error: ', end='')
-        print(error, end='')
-        print(Fore.RESET, end = '\r')
+    # Just make a request to the given url and see if it succeeds
+    status = requests.get(url, headers=anti_bot_headers)
+    if status.status_code != 200:
+        print('\n\n\n' + clear_prev_line + Fore.RED + 'Invalid URL: ' + url + ' Status: ' + str(status.status_code) + '\n\n\n\n', end='')
         return False
     return True
+
 
 # key = url, value = depth when url was visited
 visited_urls = dict()
@@ -155,27 +147,10 @@ def scrape_image_urls(current_url, recursion_enabled, depth):
 
     # Parse the current url's HTML
     print(clear_prev_line + Fore.LIGHTBLACK_EX + 'Crawling on url: ' + current_url + Fore.RESET, end='\r')
-    request_params = request.Request(
-        url=current_url, 
-        headers=anti_bot_headers
-    )
-    # html = urllib.request.urlopen(request_params).read().decode('utf-8')
-
-    with urllib.request.urlopen(request_params) as response:
-        # Check for Content-Encoding
-        content_encoding = response.headers.get('Content-Encoding', '')
-        
-        if 'gzip' in content_encoding:
-            # If the response is gzip-compressed, decompress it
-            buf = io.BytesIO(response.read())
-            with gzip.GzipFile(fileobj=buf) as f:
-                html = f.read().decode('utf-8')  # Decode after decompressing
-        else:
-            # Read the response and decode utf-8 directly
-            html = response.read().decode('utf-8')
+    response = requests.get(current_url, headers=anti_bot_headers)
 
     parser = SpiderParser()
-    parser.feed(html)
+    parser.feed(response.text)
 
     # Add the images to the set for downloading
     for image_path in parser.image_paths:
@@ -215,11 +190,11 @@ def get_image_filename(download_dir_path, image_url):
 
 def download_images(download_dir_path):
     for image_url in images_to_scrape:
-        with urllib.request.urlopen(image_url) as image_data:
-            file_name = get_image_filename(download_dir_path, image_url)
-            with open(file_name, 'wb') as image:
-                image.write(image_data.read())
-                print(Fore.GREEN + 'Downloaded image: ' + image_url + Fore.RESET)
+        image_data = requests.get(image_url, headers=anti_bot_headers).content
+        file_name = get_image_filename(download_dir_path, image_url)
+        with open(file_name, 'wb') as image:
+            image.write(image_data)
+            print(Fore.GREEN + 'Downloaded image: ' + image_url + Fore.RESET)
 
 
 if __name__=="__main__":
