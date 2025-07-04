@@ -51,7 +51,7 @@ To download images from a website:
 
 ### Description
 
-`scorpion.py` is a command-line tool that extracts metadata and EXIF data from images and files. It can process multiple files in a single command.
+`scorpion.py` is a command-line tool that extracts metadata and EXIF data from images and files. It can process multiple files in a single command (duplicates will be shown once).
 
 ### Usage
 

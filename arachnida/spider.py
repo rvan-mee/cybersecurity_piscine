@@ -32,7 +32,7 @@ def parse_input():
     parser = argparse.ArgumentParser(prog='spider', usage='%(prog)s [options]', description='A script to download images from a given website')
     parser.add_argument('URL', help='The URL used to download the data from')
     parser.add_argument('-r', '--recursive', help='Enables recursive downloads', action='store_true')
-    parser.add_argument('-l', '--depth', nargs='?', type=int, help='Sets the depth of the recursion, if the -r flag is enabled and no value is given a default depth of 5 is set', const=5, default=1)
+    parser.add_argument('-l', '--depth', type=int, help='Sets the depth of the recursion, if the -r flag is enabled and no value is given a default depth of 5 is set', default=5)
     parser.add_argument('-p', '--path', type=str, help='Sets the path where the images will be downloaded to, the default directory being ./data/ which will be created if it does not exist already', default='./data/')
 
     args = parser.parse_args()
@@ -42,7 +42,7 @@ def parse_input():
         print(Fore.RED + 'The -r or --recursive must be enabled when -l is given' + Fore.RESET)
         exit(1)
 
-    if args.depth < 0:
+    if args.depth <= 0:
         print(Fore.RED + 'Please provide a positive recursion depth' + Fore.RESET)
         exit(2)
 
@@ -131,10 +131,6 @@ def validate_url(url):
 visited_urls = dict()
 images_to_scrape = set()
 def scrape_image_urls(current_url, recursion_enabled, depth):
-    # Recursive exit conditions
-    if recursion_enabled and depth <= 0:
-        return
-
     # If we have already visited this url we check if we visited it
     # with a lower depth, if our current depth is higher we have the
     # possibility of finding new urls at a deeper depth. 
@@ -159,7 +155,8 @@ def scrape_image_urls(current_url, recursion_enabled, depth):
             images_to_scrape.add(image_url)
 
     if recursion_enabled:
-        if depth - 1 != 0:
+        # Recursive exit conditions
+        if (depth - 1) > 0:
             for hyperlink in parser.urls:
                 new_url = urljoin(current_url, hyperlink)
                 # print('checking url: ' + new_url)
