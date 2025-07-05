@@ -5,26 +5,26 @@
 ## Usage
 
 ```bash
-./ft_otp.py [options]
+./ft_otp.py [option] [input_file]
 ```
 
 ## Options
 
-- `-k [FILE]`
+- `-k`
   - **Description**: Provide a file containing a hexadecimal key of at least 64 characters. This key will be stored inside an encrypted file called `ft_otp.key`.
-  - **Type**: String
+  - **Type**: Flag
 
-- `-g [FILE]`
+- `-g`
   - **Description**: Generate a one-time password (OTP) using the specified key file.
-  - **Type**: String
+  - **Type**: Flag
 
 - `-q`
   - **Description**: Generate a QR code for the given key file. This QR code can be scanned by authenticator apps to easily set up two-factor authentication.
-  - **Type**: Flag (-g required required)
+  - **Type**: Flag
 
 - `-v`
   - **Description**: Validate your password. This option checks if the provided password is correct.
-  - **Type**: Flag (-g required)
+  - **Type**: Flag
 
 ## Requirements
 
@@ -48,10 +48,10 @@ To generate a one-time password using a key file:
 
 To generate a QR code for the key:
 ```bash
-./ft_otp.py -q -g ft_otp.key
+./ft_otp.py -q ft_otp.key
 ```
 
 To validate your password:
 ```bash
-./ft_otp.py -v -g ft_otp.key
+./ft_otp.py -v ft_otp.key
 ```
