@@ -1,0 +1,15 @@
+services:
+  tor-nginx:
+    container_name: "ft_onion"
+    hostname: "ft_onion"
+    build:
+      context: .
+      secrets:
+        - pubkey
+    ports:
+      - "8080:80"
+      - "4242:4242"
+
+secrets:
+  pubkey:
+    file: ${PUB_KEY_PATH}
