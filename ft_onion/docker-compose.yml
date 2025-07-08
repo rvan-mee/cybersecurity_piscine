@@ -7,7 +7,6 @@ services:
       secrets:
         - pubkey
     ports:
-      - "8080:80"
       - "4242:4242"
 
 secrets:

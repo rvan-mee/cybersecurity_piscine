@@ -1,6 +1,5 @@
 FROM debian:bullseye-slim
 
-EXPOSE 80
 EXPOSE 4242
 
 RUN apt-get update && \
@@ -9,7 +8,8 @@ RUN apt-get update && \
     tor \
     openssh-server \
     ssh \
-    sudo
+    sudo \
+    curl
 
 # Set correct directory permissions
 RUN mkdir -p /var/lib/tor /run/tor && \
